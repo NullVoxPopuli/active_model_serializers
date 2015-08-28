@@ -7,8 +7,8 @@ module ActiveModel
         class HasManyTestTest < Minitest::Test
           def setup
             ActionController::Base.cache_store.clear
-            @author = Author.new(id: 1, name: 'Steve K.')
             @post = Post.new(id: 42, title: 'New Post', body: 'Body')
+            @author = Author.new(id: 1, name: 'Steve K.', bio: nil, roles: [], posts: [@post])
             @first_comment = Comment.new(id: 1, body: 'ZOMG A COMMENT')
             @second_comment = Comment.new(id: 2, body: 'ZOMG ANOTHER COMMENT')
             @post.comments = [@first_comment, @second_comment]
@@ -40,6 +40,34 @@ module ActiveModel
               ]
             }.to_json, adapter.serializable_hash[:post].to_json)
           end
+
+          def test_nested_has_many
+            serializer = AuthorSerializer.new(@author)
+            adapter = ActiveModel::Serializer::Adapter::Json.new(serializer)
+
+            expected = {
+              author: {
+                id: 1, name: 'Steve K.',
+                posts: [
+                  {
+                    id: 42, title: 'New Post', body: 'Body',
+                    comments: [
+                      { id: 1, body: 'ZOMG A COMMENT' },
+                      { id: 2, body: 'ZOMG ANOTHER COMMENT' }
+                    ]
+                  }
+                ],
+                roles: [],
+                bio: nil
+              }
+            }
+
+            actual = adapter.serializable_hash
+
+            assert_equal(expected, actual)
+          end
+
+
         end
       end
     end
