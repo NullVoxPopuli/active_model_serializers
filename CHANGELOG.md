@@ -12,3 +12,4 @@
   * adds FlattenJSON as default adapter [@joaomdmoura]
   * adds support for `pagination links` at top level of JsonApi adapter [@bacarini]
   * adds extended format for `include` option to JsonApi adapter [@beauby]
+  * adds support for nested associations via the `include` key on association definitions in the Json adapter [@NullVoxPopuli]

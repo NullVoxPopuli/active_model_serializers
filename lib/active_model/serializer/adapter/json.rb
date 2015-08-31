@@ -9,12 +9,6 @@ module ActiveModel
           options ||= {}
           { root => Attributes.new(serializer).serializable_hash(options) }
         end
-
-        private
-
-        def fragment_cache(cached_hash, non_cached_hash)
-          ActiveModel::Serializer::Adapter::Json::FragmentCache.new.fragment_cache(cached_hash, non_cached_hash)
-        end
       end
     end
   end
