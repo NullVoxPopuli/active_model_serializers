@@ -36,21 +36,10 @@ module ActiveModel
 
           included_associations.each do |association|
             serializer = association.serializer
-            opts = association.options
             key = association.key
-
-            # sanity check if the association has nesting data
-            has_nesting = _nested_associations[key].present?
-            if has_nesting
-              include_options_from_parent = { include: _nested_associations[key] }
-              opts = opts.merge(include_options_from_parent)
-            end
-
-            if serializer.respond_to?(:each)
-              parent[key] = to_many_relationship_for(serializer, opts)
-            else
-              parent[key] = to_one_relationship_for(serializer, opts)
-            end
+            opts = nested_options(key, association.options)
+            # mutates parent
+            add_relationship_for(parent, key, serializer, opts)
           end
 
           parent
@@ -62,6 +51,16 @@ module ActiveModel
 
         private
 
+        def nested_options(key, options)
+          has_nesting = _nested_associations[key].present?
+          if has_nesting
+            include_options_from_parent = { include: _nested_associations[key] }
+            options = options.merge(include_options_from_parent)
+          end
+
+          options
+        end
+
         def relevant_included_associations_for(serializer, nested_associations = {})
           if nested_associations.present?
             serializer.associations.select do |association|
@@ -72,6 +71,23 @@ module ActiveModel
           else
             serializer.associations
           end
+        end
+
+        def add_relationship_for(parent, key, serializer, opts)
+          # mutates parent
+          apply_relationship_to(parent, key) do
+            if serializer.respond_to?(:each)
+              to_many_relationship_for(serializer, opts)
+            else
+              to_one_relationship_for(serializer, opts)
+            end
+          end
+
+          parent
+        end
+
+        def apply_relationship_to(hash, key)
+          hash[key] = yield
         end
 
         # add a singular relationship
