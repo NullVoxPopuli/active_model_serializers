@@ -106,6 +106,8 @@ module ActiveModel
       #
       def build_association(parent_serializer, parent_serializer_options, include_slice = {})
         reflection_options = options.dup
+        reflection_options[:namespace] ||= parent_serializer_options[:namespace]
+
         association_value = value(parent_serializer, include_slice)
         serializer_class = parent_serializer.class.serializer_for(association_value, reflection_options)
         reflection_options[:include_data] = include_data?(include_slice)
