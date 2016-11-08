@@ -47,7 +47,7 @@ end
 require 'coverage'
 Coverage.start
 
-# ADD SOME CUSTOM REPORTING AT EXIT
+## ADD SOME CUSTOM REPORTING AT EXIT
 SimpleCov.at_exit do
   next if $! and not ($!.kind_of? SystemExit and $!.success?)
 
@@ -105,7 +105,6 @@ end.new do
   else
     formatters = []
   end
-  # Using default formatters...
   SimpleCov.formatters = formatters
 end
 # rubocop:enable Style/MultilineBlockChain
