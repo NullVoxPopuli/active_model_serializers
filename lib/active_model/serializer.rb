@@ -44,7 +44,7 @@ module ActiveModel
       elsif resource.respond_to?(:to_ary)
         config.collection_serializer
       else
-        options.fetch(:serializer) { get_serializer_for(resource.class, options) }
+        options.fetch(:serializer) { get_serializer_for(resource.class) }
       end
     end
 
@@ -59,11 +59,17 @@ module ActiveModel
     end
 
     # @api private
-    def self.serializer_lookup_chain_for(klass, namespace = nil)
-      lookups = ActiveModelSerializers.config.serializer_lookup_chain
-      Array[*lookups].flat_map do |lookup|
-        lookup.call(klass, self, namespace)
-      end.compact
+    def self.serializer_lookup_chain_for(klass)
+      chain = []
+
+      resource_class_name = klass.name.demodulize
+      resource_namespace = klass.name.deconstantize
+      serializer_class_name = "#{resource_class_name}Serializer"
+
+      chain.push("#{name}::#{serializer_class_name}") if self != ActiveModel::Serializer
+      chain.push("#{resource_namespace}::#{serializer_class_name}")
+
+      chain
     end
 
     # Used to cache serializer name => serializer class
@@ -78,12 +84,11 @@ module ActiveModel
     #   1. class name appended with "Serializer"
     #   2. try again with superclass, if present
     #   3. nil
-    def self.get_serializer_for(klass, options = {})
+    def self.get_serializer_for(klass)
       return nil unless config.serializer_lookup_enabled
       serializers_cache.fetch_or_store(klass) do
         # NOTE(beauby): When we drop 1.9.3 support we can lazify the map for perfs.
-        lookup_chain = serializer_lookup_chain_for(klass, options[:namespace])
-        serializer_class = lookup_chain.map(&:safe_constantize).find { |x| x && x < ActiveModel::Serializer }
+        serializer_class = serializer_lookup_chain_for(klass).map(&:safe_constantize).find { |x| x && x < ActiveModel::Serializer }
 
         if serializer_class
           serializer_class
